@@ -1,10 +1,19 @@
 {
   "asd": {
-    "hasKotlin": true
+    "hasKotlinSrc": true,
+    "isKotlinBuild": true
+
   },
   "wewe": {
-    "hasKotlin": true
+    "isKotlinBuild": true,
+    "dependencies": [
+      "asd",
+      "qqq"
+    ]
   },
   "qqq": {
+    "dependencies": [
+      "asd"
+    ]
   }
 }

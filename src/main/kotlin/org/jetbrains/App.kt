@@ -7,79 +7,80 @@ import java.io.File
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 
-
-fun createParentProject(root:File, modules: Set<String>) {
-    val parentPom = File(root, "pom.xml")
-    parentPom.writeText(parentPom(modules))
-}
-
 fun main(args: Array<String>) {
+    ProjectGenerator().generate()
+}
 
-    val projectDir = File(System.getProperty("user.dir")).also {
-        if(!it.isDirectory) throw Exception("Could not get project dir!")
-    }
-
-    val outDir = File(projectDir, "out")
-    if(outDir.exists()) outDir.deleteRecursively()
-
-    val newProjectFolder = File(outDir, "myProject")
-    newProjectFolder.mkdirs()
-
-    val configFile = File(projectDir, "config.json")
-    val projects = parseConfig(configFile)
-    createParentProject(newProjectFolder, projects.keys)
-    for(project in projects) {
-        val projectName = project.key
-        val modulePath = File(newProjectFolder, projectName).also { it ->
-            it.mkdirs()
+class ProjectGenerator {
+    fun generate() {
+        val projectDir = File(System.getProperty("user.dir")).also {
+            if (!it.isDirectory) throw Exception("Could not get project dir!")
         }
-        createModule(projectName, project.value, modulePath)
+
+        val outDir = File(projectDir, "out")
+        if (outDir.exists()) outDir.deleteRecursively()
+
+        val newProjectFolder = File(outDir, "myProject")
+        newProjectFolder.mkdirs()
+
+        val configFile = File(projectDir, "config.json")
+        val projects = parseConfig(configFile)
+        createParentProject(newProjectFolder, projects.keys)
+        for (project in projects) {
+
+            val projectName = project.key
+            val modulePath = File(newProjectFolder, projectName).also { it ->
+                it.mkdirs()
+            }
+            createModule(projectName, project.value, modulePath)
+        }
+        //println("echo -ne '\\n' | mvn archetype:generate -DgroupId=org.baeldung -DartifactId=parent-project".runCommand(outDir))
     }
-    //println("echo -ne '\\n' | mvn archetype:generate -DgroupId=org.baeldung -DartifactId=parent-project".runCommand(outDir))
-}
 
-
-fun parseConfig(configFile: File): Map<String, Project> {
-    if(!configFile.exists()) throw Exception("Config does not exist!")
-    val jsonString = configFile.readText()
-
-    val gson = Gson()
-    val listProject = object : TypeToken<Map<String, Project>>() {}.type
-
-    return gson.fromJson(jsonString, listProject)
-}
-
-private fun createSrc(root: File){
-
-}
-
-fun createModule(moduleName: String, project: Project, modulePath: File) {
-    val modulePom = File(modulePath, "pom.xml")
-    modulePom.writeText(modulePom(moduleName, project))
-    createJavaSrc(moduleName, modulePath)
-    if(project.hasKotlin) {
-        createKotlinSrc(moduleName, modulePath)
+    private fun createParentProject(root: File, modules: Set<String>) {
+        val parentPom = File(root, "pom.xml")
+        parentPom.writeText(parentPom(modules))
     }
-}
 
-fun createJavaSrc(moduleName: String, moduleRoot: File) {
-    val moduleJava = File(moduleRoot, "src/main/java/org/example/${moduleName.capitalize()}.java")
-    moduleJava.parentFile.mkdirs()
-    moduleJava.writeText(javaFile(moduleName))
+    private fun parseConfig(configFile: File): Map<String, Project> {
+        if (!configFile.exists()) throw Exception("Config does not exist!")
+        val jsonString = configFile.readText()
 
-    //tests
-    val moduleJavaTests = File(moduleRoot, "src/test/java/org/example/${moduleName.capitalize()}Test.java")
-    moduleJavaTests.parentFile.mkdirs()
-    moduleJavaTests.writeText(javaTestFile(moduleName))
-}
+        val gson = Gson()
+        val listProject = object : TypeToken<Map<String, Project>>() {}.type
 
-fun createKotlinSrc(moduleName: String, moduleRoot: File) {
-    val moduleKotlin = File(moduleRoot, "src/main/kotlin/org/example/${moduleName.capitalize()}.kt")
-    moduleKotlin.parentFile.mkdirs()
-    moduleKotlin.writeText(kotlinFile(moduleName))
+        return gson.fromJson(jsonString, listProject)
+    }
 
-    //tests
-    val moduleKotlinTests = File(moduleRoot, "src/test/kotlin/org/example/${moduleName.capitalize()}Test.kt")
-    moduleKotlinTests.parentFile.mkdirs()
-    moduleKotlinTests.writeText(kotlinTestFile(moduleName))
+    private fun createModule(moduleName: String, project: Project, modulePath: File) {
+        project.checkValidity(moduleName)
+        val modulePom = File(modulePath, "pom.xml")
+        modulePom.writeText(modulePom(moduleName, project))
+        createJavaSrc(moduleName, project, modulePath)
+        if (project.hasKotlinSrc) {
+            createKotlinSrc(moduleName, modulePath)
+        }
+    }
+
+    private fun createJavaSrc(moduleName: String, project: Project, moduleRoot: File) {
+        val moduleJava = File(moduleRoot, "src/main/java/org/example/${moduleName.capitalize()}Java.java")
+        moduleJava.parentFile.mkdirs()
+        moduleJava.writeText(javaFile(moduleName, project.dependencies))
+
+        //tests
+        val moduleJavaTests = File(moduleRoot, "src/test/java/org/example/${moduleName.capitalize()}JavaTest.java")
+        moduleJavaTests.parentFile.mkdirs()
+        moduleJavaTests.writeText(javaTestFile(moduleName))
+    }
+
+    private fun createKotlinSrc(moduleName: String, moduleRoot: File) {
+        val moduleKotlin = File(moduleRoot, "src/main/kotlin/org/example/${moduleName.capitalize()}Kotlin.kt")
+        moduleKotlin.parentFile.mkdirs()
+        moduleKotlin.writeText(kotlinFile(moduleName))
+
+        //tests
+        val moduleKotlinTests = File(moduleRoot, "src/test/kotlin/org/example/${moduleName.capitalize()}KotlinTest.kt")
+        moduleKotlinTests.parentFile.mkdirs()
+        moduleKotlinTests.writeText(kotlinTestFile(moduleName))
+    }
 }
