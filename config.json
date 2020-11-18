@@ -1,19 +1,37 @@
 {
-  "asd": {
-    "hasKotlinSrc": true,
+  "module1": {
+    "javaSources": {
+      "kotlinDep": [
+        "module12"
+      ],
+      "javaDep": [
+        "module12"
+      ]
+    },
+    "kotlinSources": {
+      "kotlinDep": [
+        "module12"
+      ],
+      "javaDep": [
+        "module12"
+      ]
+    },
     "isKotlinBuild": true
-
   },
-  "wewe": {
-    "isKotlinBuild": true,
-    "dependencies": [
-      "asd",
-      "qqq"
-    ]
+  "module12": {
+    "javaSources": {},
+    "kotlinSources": {},
+    "isKotlinBuild": true
   },
-  "qqq": {
-    "dependencies": [
-      "asd"
-    ]
+  "module13": {
+    "javaSources": {
+      "kotlinDep": [
+        "module1"
+      ],
+      "javaDep": [
+        "module1"
+      ]
+    },
+    "isKotlinBuild": false
   }
 }

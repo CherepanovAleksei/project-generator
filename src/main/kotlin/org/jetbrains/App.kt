@@ -56,8 +56,10 @@ class ProjectGenerator {
         project.checkValidity(moduleName)
         val modulePom = File(modulePath, "pom.xml")
         modulePom.writeText(modulePom(moduleName, project))
-        createJavaSrc(moduleName, project, modulePath)
-        if (project.hasKotlinSrc) {
+        if(project.javaSources != null) {
+            createJavaSrc(moduleName, project, modulePath)
+        }
+        if (project.kotlinSources != null) {
             createKotlinSrc(moduleName, modulePath)
         }
     }
@@ -65,7 +67,7 @@ class ProjectGenerator {
     private fun createJavaSrc(moduleName: String, project: Project, moduleRoot: File) {
         val moduleJava = File(moduleRoot, "src/main/java/org/example/${moduleName.capitalize()}Java.java")
         moduleJava.parentFile.mkdirs()
-        moduleJava.writeText(javaFile(moduleName, project.dependencies))
+        moduleJava.writeText(javaFile(moduleName, project.getJavaDependencies(), project.getKotlinDependencies()))
 
         //tests
         val moduleJavaTests = File(moduleRoot, "src/test/java/org/example/${moduleName.capitalize()}JavaTest.java")

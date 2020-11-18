@@ -16,7 +16,7 @@ val parentPom: (Set<String>) -> String = { modules ->
           <artifactId>parent-project</artifactId>
           <version>1.0-SNAPSHOT</version>
           <name>parent-project</name>
-          
+
           <!-- FIXME change it to the project's website -->
           <url>http://www.example.com</url>
           <packaging>pom</packaging>
@@ -33,7 +33,7 @@ val parentPom: (Set<String>) -> String = { modules ->
               <scope>test</scope>
             </dependency>
           </dependencies>
-          
+
           <build>
             <pluginManagement>
               <!-- lock down plugins versions to avoid using Maven defaults (may be moved to parent pom) -->
@@ -80,7 +80,7 @@ val parentPom: (Set<String>) -> String = { modules ->
               </plugins>
             </pluginManagement>
           </build>
-          
+
           <modules>
 $modulesXML
           </modules>
@@ -90,12 +90,13 @@ $modulesXML
 }
 
 val modulePom: (String, Project) -> String = { name, project ->
+    val moduleDependencies = project.getAllDependencies()
+    var moduleDependenciesXML = ""
 
-    var moduleDependencies = ""
-    if(project.dependencies != null) {
+    if(moduleDependencies.isNotEmpty()) {
 
-        for (dependency in project.dependencies) {
-            moduleDependencies += """
+        for (dependency in moduleDependencies) {
+            moduleDependenciesXML += """
     <dependency>
       <groupId>org.example</groupId>
       <artifactId>$dependency</artifactId>
@@ -119,7 +120,7 @@ ${if (project.isKotlinBuild) """
         <scope>test</scope>
     </dependency>
 """ else ""}
-$moduleDependencies
+$moduleDependenciesXML
     """
 // return lambda
     """
@@ -156,8 +157,8 @@ ${if (project.isKotlinBuild) "    <kotlin.version>1.4.10</kotlin.version>" else 
     </dependency>
 $dependencies
   </dependencies>
-        
-${buildXML(project.isKotlinBuild, project.hasKotlinSrc)}
+
+${buildXML(project.isKotlinBuild, project.kotlinSources != null)}
 </project>
     """.trimIndent()
 }
@@ -290,17 +291,23 @@ val buildXML = {
           <version>3.0.0</version>
         </plugin>
       </plugins>
-    
+
   </build>
         """
 }
 
-val javaFile = { name: String, dependencies: List<String>? ->
+val javaFile = { name: String, javaDependencies: List<String>?, kotlinDependencies: List<String>? ->
     var dependencyCall = ""
-    if(dependencies != null) {
-        for (dependency in dependencies) {
+    if(javaDependencies != null) {
+        for (dependency in javaDependencies) {
 
-            dependencyCall += "                new ${dependency.capitalize()}().sayHello();\n"
+            dependencyCall += "                new ${dependency.capitalize()}Java().sayHello();\n"
+        }
+    }
+    if (kotlinDependencies != null) {
+        for (dependency in kotlinDependencies) {
+
+            dependencyCall += "                new ${dependency.capitalize()}Kotlin().sayHello();\n"
         }
     }
     """
@@ -313,7 +320,7 @@ val javaFile = { name: String, dependencies: List<String>? ->
 $dependencyCall
             }
         }
-        
+
     """.trimIndent()
 }
 
@@ -326,7 +333,7 @@ package org.example;
 import static org.junit.Assert.assertTrue;
 import org.junit.Test;
 
-public class ${name.capitalize()}JavaTest 
+public class ${name.capitalize()}JavaTest
 {
     /**
      * Rigorous Test :-)

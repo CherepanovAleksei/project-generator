@@ -1,0 +1,7 @@
+{
+  "numberOfModules" : 4,
+  "haveKotlinSrc" : true,
+  "haveJavaToKotlinDependencies" : true,
+  "haveKotlinToJavaDependencies" : false,
+  "isAllModulesKotlinBuild" : false
+}
