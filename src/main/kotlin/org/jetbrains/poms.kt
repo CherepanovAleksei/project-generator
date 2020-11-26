@@ -35,7 +35,6 @@ val parentPom: (Set<String>) -> String = { modules ->
           </dependencies>
 
           <build>
-            <pluginManagement>
               <!-- lock down plugins versions to avoid using Maven defaults (may be moved to parent pom) -->
               <plugins>
                 <!-- clean lifecycle, see https://maven.apache.org/ref/current/maven-core/lifecycles.html#clean_Lifecycle -->
@@ -78,7 +77,6 @@ val parentPom: (Set<String>) -> String = { modules ->
                   <version>3.0.0</version>
                 </plugin>
               </plugins>
-            </pluginManagement>
           </build>
 
           <modules>
@@ -257,38 +255,10 @@ val buildXML = {
           <version>3.1.0</version>
         </plugin>
         <!-- default lifecycle, jar packaging: see https://maven.apache.org/ref/current/maven-core/default-bindings.html#Plugin_bindings_for_jar_packaging -->
-        <plugin>
-          <artifactId>maven-resources-plugin</artifactId>
-          <version>3.0.2</version>
-        </plugin>
+
         <plugin>
           <artifactId>maven-compiler-plugin</artifactId>
           <version>3.8.0</version>
-        </plugin>
-        <plugin>
-          <artifactId>maven-surefire-plugin</artifactId>
-          <version>2.22.1</version>
-        </plugin>
-        <plugin>
-          <artifactId>maven-jar-plugin</artifactId>
-          <version>3.0.2</version>
-        </plugin>
-        <plugin>
-          <artifactId>maven-install-plugin</artifactId>
-          <version>2.5.2</version>
-        </plugin>
-        <plugin>
-          <artifactId>maven-deploy-plugin</artifactId>
-          <version>2.8.2</version>
-        </plugin>
-        <!-- site lifecycle, see https://maven.apache.org/ref/current/maven-core/lifecycles.html#site_Lifecycle -->
-        <plugin>
-          <artifactId>maven-site-plugin</artifactId>
-          <version>3.7.1</version>
-        </plugin>
-        <plugin>
-          <artifactId>maven-project-info-reports-plugin</artifactId>
-          <version>3.0.0</version>
         </plugin>
       </plugins>
 
@@ -315,8 +285,11 @@ val javaFile = { name: String, javaDependencies: List<String>?, kotlinDependenci
 
         public class ${name.capitalize()}Java
         {
-            public static void sayHello() {
-                System.out.println( "Hi, ${name.capitalize()}, from Java!" );
+            public void sayHello() {
+                System.out.println( "Hi, I'm ${name.capitalize()} module (java)!" );
+            }
+            
+            public void callDependencies() {
 $dependencyCall
             }
         }
@@ -341,6 +314,7 @@ public class ${name.capitalize()}JavaTest
     @Test
     public void shouldAnswerWithTrue()
     {
+        new ${name.capitalize()}Java().callDependencies();
         assertTrue( true );
     }
 }
@@ -348,15 +322,32 @@ public class ${name.capitalize()}JavaTest
     """.trimIndent()
 }
 
-val kotlinFile = {
-        name: String ->
+val kotlinFile = { name: String, javaDependencies: List<String>?, kotlinDependencies: List<String>? ->
+        var dependencyCall = ""
+        if(javaDependencies != null) {
+            for (dependency in javaDependencies) {
 
+                dependencyCall += "        ${dependency.capitalize()}Java().sayHello();\n"
+            }
+        }
+        if (kotlinDependencies != null) {
+            for (dependency in kotlinDependencies) {
+
+                dependencyCall += "        ${dependency.capitalize()}Kotlin().callDependencies()\n"
+            }
+        }
     """
 package org.example
 
 class ${name.capitalize()}Kotlin {
-    fun sayHello(){
-        println("Hi, ${name.capitalize()} from Kotlin!")
+
+    fun sayHello() {
+        println( "Hi, I'm ${name.capitalize()} module (Kotlin)!" );
+    }
+    
+    fun callDependencies() {
+        sayHello()
+$dependencyCall
     }
 }
     """.trimIndent()
@@ -374,6 +365,7 @@ import kotlin.test.assertEquals
 class ${name.capitalize()}KotlinTest {
     @Test
     fun thingsShouldWork() {
+        ${name.capitalize()}Kotlin().callDependencies()
         assertEquals(listOf(1,2,3).reversed(), listOf(3,2,1))
     }
 }

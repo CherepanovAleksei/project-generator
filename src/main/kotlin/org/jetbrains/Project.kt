@@ -1,8 +1,8 @@
 package org.jetbrains
 
 data class Project(val isKotlinBuild: Boolean = false,
-              val javaSources: Sources,
-              val kotlinSources: Sources) {
+              val javaSources: Sources?,
+              val kotlinSources: Sources?) {
     fun checkValidity(moduleName:String){
         if(kotlinSources != null && !isKotlinBuild) throw Exception("Wrong configuration: " +
                 "module $moduleName has kotlin sources, " +
@@ -10,12 +10,12 @@ data class Project(val isKotlinBuild: Boolean = false,
                 "(Add  \"isKotlinBuild\": true to your config)")
         //TODO check dependency to sources
     }
-    fun getAllDependencies() = (getJavaDependencies() + getKotlinDependencies()).distinct()
+    fun getAllDependencies() = (getJavaSourceDependencies() + getKotlinSourceDependencies()).distinct()
 
-    fun getJavaDependencies() = getDependencies(javaSources)
-    fun getKotlinDependencies() = getDependencies(kotlinSources)
+    fun getJavaSourceDependencies() = getAllSourceDependencies(javaSources)
+    fun getKotlinSourceDependencies() = getAllSourceDependencies(kotlinSources)
 
-    private fun getDependencies(sources: Sources?): List<String>{
+    private fun getAllSourceDependencies(sources: Sources?): List<String>{
         if(sources == null) return emptyList()
 
         val dependencies = ArrayList<String>()

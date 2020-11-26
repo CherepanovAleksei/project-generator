@@ -8,6 +8,7 @@ import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 
 fun main(args: Array<String>) {
+//    ConfigGenerator().generate()
     ProjectGenerator().generate()
 }
 
@@ -60,14 +61,14 @@ class ProjectGenerator {
             createJavaSrc(moduleName, project, modulePath)
         }
         if (project.kotlinSources != null) {
-            createKotlinSrc(moduleName, modulePath)
+            createKotlinSrc(moduleName, project, modulePath)
         }
     }
 
     private fun createJavaSrc(moduleName: String, project: Project, moduleRoot: File) {
         val moduleJava = File(moduleRoot, "src/main/java/org/example/${moduleName.capitalize()}Java.java")
         moduleJava.parentFile.mkdirs()
-        moduleJava.writeText(javaFile(moduleName, project.getJavaDependencies(), project.getKotlinDependencies()))
+        moduleJava.writeText(javaFile(moduleName, project.javaSources?.javaDep ?: emptyList(), project.javaSources?.kotlinDep ?: emptyList()))
 
         //tests
         val moduleJavaTests = File(moduleRoot, "src/test/java/org/example/${moduleName.capitalize()}JavaTest.java")
@@ -75,10 +76,10 @@ class ProjectGenerator {
         moduleJavaTests.writeText(javaTestFile(moduleName))
     }
 
-    private fun createKotlinSrc(moduleName: String, moduleRoot: File) {
+    private fun createKotlinSrc(moduleName: String, project: Project, moduleRoot: File) {
         val moduleKotlin = File(moduleRoot, "src/main/kotlin/org/example/${moduleName.capitalize()}Kotlin.kt")
         moduleKotlin.parentFile.mkdirs()
-        moduleKotlin.writeText(kotlinFile(moduleName))
+        moduleKotlin.writeText(kotlinFile(moduleName, project.kotlinSources?.javaDep ?: emptyList(), project.kotlinSources?.kotlinDep ?: emptyList()))
 
         //tests
         val moduleKotlinTests = File(moduleRoot, "src/test/kotlin/org/example/${moduleName.capitalize()}KotlinTest.kt")
